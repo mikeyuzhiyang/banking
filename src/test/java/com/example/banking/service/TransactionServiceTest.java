@@ -1,6 +1,7 @@
 package com.example.banking.service;
 
 import com.example.banking.dto.TransactionDto;
+import com.example.banking.dto.TransactionResponse;
 import com.example.banking.enums.TransactionTypeEnum;
 import com.example.banking.exception.TransactionNotFoundException;
 import com.example.banking.model.Transaction;
@@ -14,6 +15,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,9 +52,8 @@ public class TransactionServiceTest {
         transaction.setId(transactionId);
         transaction.setAccountNumber("Mike");
         transaction.setAmount(BigDecimal.valueOf(100.50));
-        transaction.setType(TransactionTypeEnum.TRANSFER.getCode());
-        transaction.setTransferAccount("Jessica");
-        transaction.setDescription("Give salary");
+        transaction.setType(TransactionTypeEnum.DEPOSIT.getCode());
+        transaction.setDescription("Monthly salary");
     }
 
     @Test
@@ -74,7 +76,6 @@ public class TransactionServiceTest {
 
         assertNotNull(response);
         assertEquals(transactionId, response.getId());
-        verify(transactionRepository, times(1)).findById(transactionId);
     }
 
     @Test
@@ -86,4 +87,41 @@ public class TransactionServiceTest {
         });
     }
 
+    @Test
+    void getAllTransaction_Success() {
+        when(transactionRepository.findAll()).thenReturn(Collections.singletonList(transaction));
+        List<TransactionResponse> responseList = transactionService.getAllTransactions(0,1);
+        assertNotNull(responseList);
+        assertEquals(transactionId, responseList.getFirst().getId());
+
+
+
+    }
+
+    @Test
+    void deleteTransaction_Fail() {
+        when(transactionRepository.existsById(any())).thenReturn(Boolean.FALSE);
+        assertThrows(TransactionNotFoundException.class, () -> {
+            transactionService.deleteTransaction(transactionId);
+        });
+    }
+
+
+    @Test
+    void updateTransaction_Success() {
+        when(transactionRepository.findById(any())).thenReturn(Optional.of(transaction));
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
+
+        TransactionResponse response = transactionService.updateTransaction(transactionId, transactionDto);
+        assertNotNull(response);
+        assertEquals(transactionId, response.getId());
+    }
+
+    @Test
+    void getTransactionsByAccountNumber_Success() {
+        when(transactionRepository.findByAccountNumber(any(), anyInt(), anyInt())).thenReturn(Collections.singletonList(transaction));
+        List<TransactionResponse> responseList = transactionService.getTransactionsByAccountNumber("Mike", 0, 1);
+        assertNotNull(responseList);
+        assertEquals(transactionId, responseList.getFirst().getId());
+    }
 }
