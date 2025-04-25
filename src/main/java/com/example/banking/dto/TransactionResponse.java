@@ -12,7 +12,7 @@ public class TransactionResponse {
     private UUID id;
     private String accountNumber;
     private BigDecimal amount;
-    private Integer type;
+    private String type;
     private String transferAccount;
     private LocalDateTime timestamp;
     private String description;

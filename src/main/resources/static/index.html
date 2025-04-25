@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Transaction System</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>Bank Transaction System</h1>
+
+    <div class="form-section">
+        <h2>Add New Transaction</h2>
+        <form id="transactionForm">
+            <div class="form-group">
+                <label for="amount">Amount:</label>
+                <input type="number" id="amount" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Description:</label>
+                <input type="text" id="description" required>
+            </div>
+            <div class="form-group">
+                <label for="type">Type:</label>
+                <select id="type" required>
+                    <option value="0">DEPOSIT</option>
+                    <option value="1">WITHDRAWAL</option>
+                    <option value="2">TRANSFER</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="transferAccount">TransferAccount:</label>
+                <input type="text" id="transferAccount">
+            </div>
+            <button type="submit">Add Transaction</button>
+        </form>
+    </div>
+
+    <div class="transactions-section">
+        <h2>Transaction List</h2>
+        <div class="controls">
+            <button id="refreshBtn">Refresh List</button>
+        </div>
+        <table id="transactionsTable">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Amount</th>
+                <th>Description</th>
+                <th>Type</th>
+                <th>TargetAccount</th>
+                <th>Timestamp</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody id="transactionsBody">
+            <!-- Transactions will be populated here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form submission
+        document.getElementById('transactionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const amount = parseFloat(document.getElementById('amount').value);
+            const description = document.getElementById('description').value;
+            const type = document.getElementById('type').value;
+            const transferAccount = document.getElementById('transferAccount').value;
+
+            axios.post('/api/transactions',  {
+                    amount: amount,
+                    description: description,
+                    type: type,
+                    transferAccount: transferAccount
+                })
+            .then(response => {
+                alert('Transaction added successfully!');
+                document.getElementById('transactionForm').reset();
+                fetchTransactions();
+            })
+            .catch(error => {
+                alert('Error adding transaction: ' + error.response.data);
+            });
+        });
+
+        // Refresh button
+        document.getElementById('refreshBtn').addEventListener('click', fetchTransactions);
+
+        // Initial load
+        fetchTransactions();
+    });
+
+    function fetchTransactions() {
+        axios.get('/api/transactions')
+            .then(response => {
+                const transactions = response.data;
+                const tableBody = document.getElementById('transactionsBody');
+                tableBody.innerHTML = '';
+
+                transactions.forEach(transaction => {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td>${transaction.id.substring(0, 8)}</td>
+                        <td>${transaction.amount}</td>
+                        <td>${transaction.description}</td>
+                        <td>${transaction.type}</td>
+                        <td>${transaction.transferAccount}</td>
+                        <td>${new Date(transaction.timestamp).toLocaleString()}</td>
+                        <td>
+                            <button onclick="editTransaction('${transaction.id}','${transaction.amount}')">Edit</button>
+                            <button onclick="deleteTransaction('${transaction.id}')">Delete</button>
+                        </td>
+                    `;
+
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching transactions:', error);
+            });
+    }
+
+    function editTransaction(id, amount) {
+<!--        const newAmount = prompt('Enter new amount:');-->
+        const newDescription = prompt('Enter new description:');
+<!--        const newType = prompt('Enter new type (0 for DEPOSIT, 1 for WITHDRAW, 2 for TRANSFER):');-->
+
+        if (newDescription) {
+            axios.post(`/api/transactions/update`,{
+                    id: id,
+                    amount: amount,
+                    description: newDescription
+                })
+            .then(() => {
+                alert('Transaction updated successfully!');
+                fetchTransactions();
+            })
+            .catch(error => {
+                alert('Error updating transaction: ' + error.response.data);
+            });
+        }
+    }
+
+    function deleteTransaction(id) {
+        if (confirm('Are you sure you want to delete this transaction?')) {
+            axios.get(`/api/transactions/delete/${id}`)
+                .then(() => {
+                    alert('Transaction deleted successfully!');
+                    fetchTransactions();
+                })
+                .catch(error => {
+                    alert('Error deleting transaction: ' + error.response.data);
+                });
+        }
+    }
+</script>
+</body>
+</html>

@@ -2,11 +2,13 @@ package com.example.banking.service.impl;
 
 import com.example.banking.dto.TransactionDto;
 import com.example.banking.dto.TransactionResponse;
+import com.example.banking.enums.TransactionTypeEnum;
 import com.example.banking.exception.DuplicateTransactionException;
 import com.example.banking.exception.TransactionNotFoundException;
 import com.example.banking.model.Transaction;
 import com.example.banking.repository.TransactionRepository;
 import com.example.banking.service.TransactionService;
+import io.micrometer.common.util.StringUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,9 @@ public class TransactionServiceImpl implements TransactionService {
             throw new DuplicateTransactionException("Transaction with this ID already exists");
         }
 
+        if (transactionDto.getType().equals(TransactionTypeEnum.TRANSFER.getCode()) && StringUtils.isEmpty(transactionDto.getTransferAccount())) {
+            throw new IllegalArgumentException("transferAccount miss");
+        }
         Transaction savedTransaction = transactionRepository.save(transaction);
         return convertToResponse(savedTransaction);
     }
@@ -76,7 +81,9 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new TransactionNotFoundException("Transaction not found with id: " + transactionDto.getId()));
 
         Transaction updatedTransaction = convertToEntity(transactionDto);
+        updatedTransaction.setType(existingTransaction.getType());
         updatedTransaction.setId(transactionDto.getId());
+        updatedTransaction.setTransferAccount(existingTransaction.getTransferAccount());
 
         transactionRepository.save(updatedTransaction);
         return convertToResponse(updatedTransaction);
@@ -106,8 +113,8 @@ public class TransactionServiceImpl implements TransactionService {
         response.setId(transaction.getId());
         response.setAccountNumber(transaction.getAccountNumber());
         response.setAmount(transaction.getAmount());
-        response.setType(transaction.getType());
-        response.setTransferAccount(transaction.getTransferAccount());
+        response.setType(TransactionTypeEnum.getDescriptionByCode(transaction.getType()));
+        response.setTransferAccount(transaction.getTransferAccount()==null?"":transaction.getTransferAccount());
         response.setTimestamp(transaction.getTimestamp());
         response.setDescription(transaction.getDescription());
         return response;
