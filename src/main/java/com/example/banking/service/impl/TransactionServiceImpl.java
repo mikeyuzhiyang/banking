@@ -70,12 +70,13 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @CacheEvict(value = {"transaction", "transactions", "accountTransactions"}, allEntries = true)
-    public TransactionResponse updateTransaction(UUID id, TransactionDto transactionDto) {
-        Transaction existingTransaction = transactionRepository.findById(id)
-                .orElseThrow(() -> new TransactionNotFoundException("Transaction not found with id: " + id));
+    public TransactionResponse updateTransaction(TransactionDto transactionDto) {
+
+        Transaction existingTransaction = transactionRepository.findById(transactionDto.getId())
+                .orElseThrow(() -> new TransactionNotFoundException("Transaction not found with id: " + transactionDto.getId()));
 
         Transaction updatedTransaction = convertToEntity(transactionDto);
-        updatedTransaction.setId(id);
+        updatedTransaction.setId(transactionDto.getId());
 
         transactionRepository.save(updatedTransaction);
         return convertToResponse(updatedTransaction);

@@ -50,15 +50,14 @@ public class TransactionController {
         return ResponseEntity.ok(responses);
     }
 
-    @PutMapping("/{id}")
+    @PostMapping("/update")
     public ResponseEntity<TransactionResponse> updateTransaction(
-            @PathVariable UUID id,
             @Valid @RequestBody TransactionDto transactionDto) {
-        TransactionResponse response = transactionService.updateTransaction(id, transactionDto);
+        TransactionResponse response = transactionService.updateTransaction(transactionDto);
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
+    @GetMapping("delete/{id}")
     public ResponseEntity<Void> deleteTransaction(@PathVariable UUID id) {
         transactionService.deleteTransaction(id);
         return ResponseEntity.noContent().build();

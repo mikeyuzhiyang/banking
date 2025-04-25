@@ -3,6 +3,7 @@ package com.example.banking.service;
 import com.example.banking.dto.TransactionDto;
 import com.example.banking.dto.TransactionResponse;
 import com.example.banking.enums.TransactionTypeEnum;
+import com.example.banking.exception.DuplicateTransactionException;
 import com.example.banking.exception.TransactionNotFoundException;
 import com.example.banking.model.Transaction;
 import com.example.banking.repository.TransactionRepository;
@@ -43,6 +44,7 @@ public class TransactionServiceTest {
         transactionId = UUID.randomUUID();
 
         transactionDto = new TransactionDto();
+        transactionDto.setId(transactionId);
         transactionDto.setAccountNumber("Mike");
         transactionDto.setAmount(BigDecimal.valueOf(100.50));
         transactionDto.setType(TransactionTypeEnum.DEPOSIT.getCode());
@@ -66,6 +68,16 @@ public class TransactionServiceTest {
         assertEquals(transactionId, response.getId());
         assertEquals("Mike", response.getAccountNumber());
         verify(transactionRepository, times(1)).save(any(Transaction.class));
+    }
+
+    @Test
+    void createTransaction_Fail() {
+        when(transactionRepository.existsById(any())).thenReturn(Boolean.TRUE);
+
+
+        assertThrows(DuplicateTransactionException.class, () -> {
+            transactionService.createTransaction(transactionDto);
+        });
     }
 
     @Test
@@ -112,9 +124,15 @@ public class TransactionServiceTest {
         when(transactionRepository.findById(any())).thenReturn(Optional.of(transaction));
         when(transactionRepository.save(any(Transaction.class))).thenReturn(transaction);
 
-        TransactionResponse response = transactionService.updateTransaction(transactionId, transactionDto);
+        TransactionResponse response = transactionService.updateTransaction(transactionDto);
         assertNotNull(response);
         assertEquals(transactionId, response.getId());
+    }
+
+    @Test
+    void deleteTransaction_Success() {
+        when(transactionRepository.existsById(any())).thenReturn(Boolean.TRUE);
+        transactionService.deleteTransaction(transactionId);
     }
 
     @Test

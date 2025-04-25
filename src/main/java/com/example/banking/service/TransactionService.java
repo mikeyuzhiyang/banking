@@ -16,7 +16,7 @@ public interface TransactionService {
 
     List<TransactionResponse> getTransactionsByAccountNumber(String accountNumber, int page, int size);
 
-    TransactionResponse updateTransaction(UUID id, TransactionDto transactionDto);
+    TransactionResponse updateTransaction(TransactionDto transactionDto);
 
     void deleteTransaction(UUID id);
 
